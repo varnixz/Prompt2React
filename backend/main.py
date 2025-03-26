@@ -6,6 +6,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+@app.get("/")
+def read_root():
+    return {"message": "Backend is running!"}
+
 # CORS Setup
 app.add_middleware(
     CORSMiddleware,
