@@ -13,7 +13,7 @@ def read_root():
 # CORS Setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://prompt2react.onrender.com"],  # Change this to your frontend URL for security
+    allow_origins=["http://localhost:3000","https://prompt2react.onrender.com"],  # Change this to your frontend URL for security
     allow_credentials=True,
     allow_methods=["*"],  
     allow_headers=["*"],
