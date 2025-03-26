@@ -28,6 +28,8 @@ const MainContent = styled.div`
   position: relative;
 `;
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL; // Fetch backend URL from .env
+
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +47,7 @@ function App() {
     setSuccessMessage('');
 
     try {
-      const response = await fetch('http://localhost:8000/generate-react/', {
+      const response = await fetch(`${BACKEND_URL}/generate-react/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),
