@@ -13,11 +13,16 @@ def read_root():
 # CORS Setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change this to your frontend URL for security
+    allow_origins=["https://prompt2react.onrender.com"],  # Change this to your frontend URL for security
     allow_credentials=True,
     allow_methods=["*"],  
     allow_headers=["*"],
 )
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logging.info(f"Incoming request: {request.method} {request.url}")
+    response = await call_next(request)
+    return response
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
