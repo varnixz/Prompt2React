@@ -18,7 +18,7 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
 # Get the Pexels API key from the .env file
-PEXELS_API_KEY = os.getenv("PEXELS_API_KEY")
+PEXELS_API_KEY = "jtPxjPOzAQUpN24bpiT7JLhWu5KRJ6YbAJ3XcQmaWcBPVhUvjFHzZzru"
 
 # Design templates (unchanged)
 design_templates = [
