@@ -103,7 +103,7 @@ def generate_code_from_azure_ai(prompt: str) -> dict:
         project_files = parse_generated_code(generated_text)
         
         # Replace placeholder images and videos with real URLs from Pexels
-        project_files = replace_placeholders(project_files, PEXELS_API_KEY)
+        project_files = replace_placeholders(project_files)
         
         return project_files
 
@@ -164,12 +164,12 @@ def extract_video_prompts(project_files: dict) -> list:
     return video_prompts
 
 
-def fetch_image_from_pexels(prompt: str, api_key: str) -> str:
+def fetch_image_from_pexels(prompt: str) -> str: -> str:
     """Fetch an image from Pexels based on a prompt."""
     try:
         # Pexels API endpoint
         url = "https://api.pexels.com/v1/search"
-        headers = {"Authorization": api_key}
+        headers = {"Authorization": PEXELS_API_KEY}
         params = {"query": prompt, "per_page": 5}  # Fetch up to 5 images
 
         # Send request to Pexels API
@@ -201,12 +201,12 @@ def fetch_image_from_pexels(prompt: str, api_key: str) -> str:
         raise Exception(f"Error fetching image for prompt '{prompt}': {str(e)}")
 
 
-def fetch_video_from_pexels(prompt: str, api_key: str) -> str:
+def fetch_video_from_pexels(prompt: str) -> str:
     """Fetch a video from Pexels based on a prompt."""
     try:
         # Pexels API endpoint for videos
         url = "https://api.pexels.com/videos/search"
-        headers = {"Authorization": api_key}
+        headers = {"Authorization": PEXELS_API_KEY}
         params = {"query": prompt, "per_page": 5}  # Fetch up to 5 videos
 
         # Send request to Pexels API
@@ -239,7 +239,7 @@ def fetch_video_from_pexels(prompt: str, api_key: str) -> str:
     except Exception as e:
         raise Exception(f"Error fetching video for prompt '{prompt}': {str(e)}")
 
-def replace_placeholders(project_files: dict, api_key: str) -> dict:
+def replace_placeholders(project_files: dict) -> dict:
     """Replace placeholder image and video URLs with real URLs from Pexels."""
     # Extract image-related prompts from <img> tags
     image_prompts = extract_image_prompts(project_files)
@@ -253,8 +253,8 @@ def replace_placeholders(project_files: dict, api_key: str) -> dict:
     for prompt in image_prompts:
         try:
             # Fetch image from Pexels
-            image_url = fetch_image_from_pexels(prompt, api_key)
-            logging.info(f"Fetched image URL for prompt '{prompt}': {image_url}")
+     image_url = fetch_image_from_pexels(prompt)  # Removed api_key
+     video_url = fetch_video_from_pexels(prompt)
 
             # Replace placeholder image URLs in the project files
             for file_path, content in project_files.items():
