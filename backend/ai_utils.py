@@ -18,7 +18,7 @@ logging.basicConfig(
 )
 
 # Hardcoded Pexels API Key
-PEXELS_API_KEY = "563492ad6f917000010000017a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p"
+PEXELS_API_KEY = "d9WgxN9rFSJOXh5CTa906SFfyjgzdHCCR01rq9QGQ0lnvxnWwDI3x2gT"
 
 # Design templates (unchanged - kept your original templates)
 design_templates = [
