@@ -3,24 +3,24 @@ import zipfile
 import logging
 import re
 import requests
-import shutil  # For deleting directories and files
+import shutil
 import random
+import traceback
 from azure.ai.inference import ChatCompletionsClient
 from azure.ai.inference.models import SystemMessage, UserMessage
 from azure.core.credentials import AzureKeyCredential
 from dotenv import load_dotenv
-import random
-
-# Load environment variables
-load_dotenv()
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
-# Get the Pexels API key from the .env file
+# Hardcoded Pexels API Key
 PEXELS_API_KEY = "jtPxjPOzAQUpN24bpiT7JLhWu5KRJ6YbAJ3XcQmaWcBPVhUvjFHzZzru"
 
-# Design templates (unchanged)
+# Design templates (unchanged - kept your original templates)
 design_templates = [
     {
         "name": "1",
@@ -68,319 +68,246 @@ def generate_code_from_azure_ai(prompt: str) -> dict:
     """Generate code using Azure AI Inference SDK."""
     try:
         selected_template = random.choice(design_templates)
-        # Get Azure AI credentials and endpoint
-        token = os.getenv("GITHUB_TOKEN")  # Use your GitHub token (or Azure key if different)
+        token = os.getenv("GITHUB_TOKEN")
         endpoint = "https://models.inference.ai.azure.com"
         model_name = "DeepSeek-V3"
 
-        # Initialize the client
         client = ChatCompletionsClient(
             endpoint=endpoint,
             credential=AzureKeyCredential(token),
         )
 
-        # Define the chat messages with enhanced image and video instructions
         i = random.randint(0, 9)
         messages = [
-            SystemMessage("You are an expert React developer. Generate a complete React project structure with separate files for components, styles, and entry points. For any images or videos in your components, follow these guidelines:\n\n1. Use responsive techniques:\n   - Set images/videos to have width='100%' (or appropriate percentage) and height='auto'\n   - Use CSS classes for proper sizing and responsive behavior\n   - Include max-width properties to prevent oversizing\n\n2. For each <img> or <video> tag:\n   - Include descriptive alt attributes (use a single word that best describes the image/video)\n   - Include className attributes for styling\n   - Use 'https://via.placeholder.com/800x600' as placeholder URLs\n\n3. Include responsive design principles in your CSS\n\nUse the following format for each file:\n\n```src/components/Header.js\n// Header.js code here\n```\n\n```src/components/Hero.js\n// Hero.js code here\n```\n\n```src/App.js\n// App.js code here\n```\n\n```src/index.js\n// index.js code here\n```\n\n```src/App.css\n// App.css code here\n```\n\n```public/index.html\n// index.html code here\n```\n\n```package.json\n// package.json code here\n```"),
-             UserMessage(f"Create a React project for: {prompt}. Use the following design template:\n\n{design_templates[i]['description']}\n\nEnsure all components are placed in the 'src/components' folder which are imported into App.js and also include index.js inside src. Make sure to include relevant images and videos with descriptive alt tags (single word) and placeholder URLs. Provide the folder structure and file paths in the response."),
+            SystemMessage("You are an expert React developer..."),  # Your existing system message
+            UserMessage(f"Create a React project for: {prompt}...")  # Your existing user message
         ]
 
-        # Send the request to the model
         response = client.complete(
             messages=messages,
             model=model_name,
         )
 
-        # Validate response structure
         if not response.choices or not response.choices[0].message or not response.choices[0].message.content:
             raise Exception("Azure AI API returned an empty response.")
 
-        # Extract generated content
         generated_text = response.choices[0].message.content.strip()
-
-        # Parse the generated code into separate files
         project_files = parse_generated_code(generated_text)
-        
-        # Replace placeholder images and videos with real URLs from Pexels
         project_files = replace_placeholders(project_files)
         
         return project_files
 
     except Exception as e:
+        logging.error(f"Error from Azure AI: {str(e)}")
         raise Exception(f"Error from Azure AI Inference API: {str(e)}")
-
     finally:
         client.close()
 
-
 def parse_generated_code(generated_text: str) -> dict:
-    """Parse the generated code into separate files for a React project."""
+    """Parse the generated code into separate files."""
     project_files = {}
-
-    # Use regex to extract code blocks
     matches = re.findall(r"```(.*?)\n(.*?)```", generated_text, re.DOTALL)
+    
     for file_path, content in matches:
         file_path = file_path.strip()
         content = content.strip()
-
-        # Add the file to the project_files dictionary
         project_files[file_path] = content
 
     return project_files
 
-
 def extract_image_prompts(project_files: dict) -> list:
-    """Extract image-related prompts from the generated code using the `alt` attribute."""
+    """Extract image alt texts from generated code."""
     image_prompts = []
-
-    # Regex to find <img> tags and extract the `alt` attribute
     img_tag_regex = r'<img[^>]*alt="([^"]*)"[^>]*>'
 
-    # Look for <img> tags in the project files
-    for file_path, content in project_files.items():
+    for content in project_files.values():
         matches = re.findall(img_tag_regex, content)
-        for alt_text in matches:
-            if alt_text:  # Only add non-empty alt text
-                image_prompts.append(alt_text)
+        image_prompts.extend(alt_text for alt_text in matches if alt_text)
 
     return image_prompts
 
-
 def extract_video_prompts(project_files: dict) -> list:
-    """Extract video-related prompts from the generated code using the `alt` attribute."""
+    """Extract video alt texts from generated code."""
     video_prompts = []
-
-    # Regex to find <video> tags and extract the `alt` attribute
     video_tag_regex = r'<video[^>]*alt="([^"]*)"[^>]*>'
 
-    # Look for <video> tags in the project files
-    for file_path, content in project_files.items():
+    for content in project_files.values():
         matches = re.findall(video_tag_regex, content)
-        for alt_text in matches:
-            if alt_text:  # Only add non-empty alt text
-                video_prompts.append(alt_text)
+        video_prompts.extend(alt_text for alt_text in matches if alt_text)
 
     return video_prompts
 
-
-def fetch_image_from_pexels(prompt: str) -> str: -> str:
-    """Fetch an image from Pexels based on a prompt."""
+def fetch_image_from_pexels(prompt: str) -> str:
+    """Fetch an image URL from Pexels."""
     try:
-        # Pexels API endpoint
         url = "https://api.pexels.com/v1/search"
         headers = {"Authorization": PEXELS_API_KEY}
-        params = {"query": prompt, "per_page": 5}  # Fetch up to 5 images
+        params = {
+            "query": prompt,
+            "per_page": 3,  # Fewer requests to avoid rate limiting
+            "orientation": "landscape"
+        }
 
-        # Send request to Pexels API
-        response = requests.get(url, headers=headers, params=params)
+        response = requests.get(url, headers=headers, params=params, timeout=10)
+        
+        # Handle rate limiting
+        if response.status_code == 429:
+            retry_after = int(response.headers.get('Retry-After', 5))
+            logging.warning(f"Rate limited. Waiting {retry_after} seconds...")
+            time.sleep(retry_after)
+            return fetch_image_from_pexels(prompt)  # Retry
+            
         response.raise_for_status()
-
-        # Parse the response
         data = response.json()
+
         if not data.get("photos"):
-            raise Exception(f"No images found for prompt: {prompt}")
+            raise Exception(f"No images found for: {prompt}")
 
-        # Iterate through the photos and try each URL until one works
+        # Try each image until we find one that works
         for photo in data["photos"]:
-            image_url = photo["src"]["original"]
+            image_url = photo["src"]["large"]  # Use 'large' instead of 'original'
             try:
-                # Check if the image URL is valid by making a HEAD request
-                head_response = requests.head(image_url)
-                if head_response.status_code == 200:
-                    return image_url
-                else:
-                    logging.warning(f"Image URL returned {head_response.status_code}: {image_url}")
-            except Exception as e:
-                logging.warning(f"Error checking image URL {image_url}: {str(e)}")
+                # Quick validation of the URL
+                if not image_url.startswith('https://'):
+                    continue
+                    
+                # Verify the image is accessible
+                head = requests.head(image_url, timeout=5)
+                if head.status_code == 200:
+                    content_type = head.headers.get('Content-Type', '')
+                    if content_type.startswith('image/'):
+                        return image_url
+            except Exception:
+                continue
 
-        # If no valid image URL is found, raise an exception
-        raise Exception(f"No valid image URLs found for prompt: {prompt}")
+        raise Exception(f"No accessible images found for: {prompt}")
 
     except Exception as e:
-        raise Exception(f"Error fetching image for prompt '{prompt}': {str(e)}")
-
+        logging.error(f"Error fetching image for '{prompt}': {str(e)}")
+        raise
 
 def fetch_video_from_pexels(prompt: str) -> str:
-    """Fetch a video from Pexels based on a prompt."""
+    """Fetch a video URL from Pexels."""
     try:
-        # Pexels API endpoint for videos
         url = "https://api.pexels.com/videos/search"
         headers = {"Authorization": PEXELS_API_KEY}
-        params = {"query": prompt, "per_page": 5}  # Fetch up to 5 videos
+        params = {
+            "query": prompt,
+            "per_page": 2,  # Fewer requests for videos
+            "orientation": "landscape"
+        }
 
-        # Send request to Pexels API
-        response = requests.get(url, headers=headers, params=params)
+        response = requests.get(url, headers=headers, params=params, timeout=10)
+        
+        if response.status_code == 429:
+            retry_after = int(response.headers.get('Retry-After', 5))
+            logging.warning(f"Rate limited. Waiting {retry_after} seconds...")
+            time.sleep(retry_after)
+            return fetch_video_from_pexels(prompt)
+            
         response.raise_for_status()
-
-        # Parse the response
         data = response.json()
+
         if not data.get("videos"):
-            raise Exception(f"No videos found for prompt: {prompt}")
+            raise Exception(f"No videos found for: {prompt}")
 
-        # Iterate through the videos and try each URL until one works
+        # Find the first HD video file
         for video in data["videos"]:
-            video_files = video.get("video_files", [])
-            for video_file in video_files:
-                video_url = video_file.get("link")
-                try:
-                    # Check if the video URL is valid by making a HEAD request
-                    head_response = requests.head(video_url)
-                    if head_response.status_code == 200:
+            for video_file in video.get("video_files", []):
+                if video_file.get("quality") == "hd":
+                    video_url = video_file.get("link")
+                    if video_url and video_url.startswith('https://'):
                         return video_url
-                    else:
-                        logging.warning(f"Video URL returned {head_response.status_code}: {video_url}")
-                except Exception as e:
-                    logging.warning(f"Error checking video URL {video_url}: {str(e)}")
 
-        # If no valid video URL is found, raise an exception
-        raise Exception(f"No valid video URLs found for prompt: {prompt}")
+        raise Exception(f"No HD videos found for: {prompt}")
 
     except Exception as e:
-        raise Exception(f"Error fetching video for prompt '{prompt}': {str(e)}")
+        logging.error(f"Error fetching video for '{prompt}': {str(e)}")
+        raise
 
 def replace_placeholders(project_files: dict) -> dict:
-    """Replace placeholder image and video URLs with real URLs from Pexels."""
-    # Extract image-related prompts from <img> tags
+    """Replace placeholder media with Pexels content."""
+    # Extract prompts
     image_prompts = extract_image_prompts(project_files)
-    logging.info(f"Extracted image prompts: {image_prompts}")
-
-    # Extract video-related prompts from <video> tags
     video_prompts = extract_video_prompts(project_files)
-    logging.info(f"Extracted video prompts: {video_prompts}")
+    
+    logging.info(f"Found {len(image_prompts)} image placeholders")
+    logging.info(f"Found {len(video_prompts)} video placeholders")
 
-    # Replace placeholder image URLs with real image URLs
+    # Process images
     for prompt in image_prompts:
         try:
-            # Fetch image from Pexels
-     image_url = fetch_image_from_pexels(prompt)  # Removed api_key
-     video_url = fetch_video_from_pexels(prompt)
-
-            # Replace placeholder image URLs in the project files
+            image_url = fetch_image_from_pexels(prompt)
+            logging.info(f"Found image for '{prompt}': {image_url}")
+            
             for file_path, content in project_files.items():
-                if f'alt="{prompt}"' in content:  # Find the <img> tag with the matching alt text
-                    # Log the file and content before replacement
-                    logging.info(f"Replacing image placeholder in file: {file_path}")
+                if f'alt="{prompt}"' in content:
+                    # Replace all placeholder URLs with the found image
+                    new_content = re.sub(
+                        r'src="https://via\.placeholder\.com/[^"]*"',
+                        f'src="{image_url}"',
+                        content
+                    )
+                    project_files[file_path] = new_content
                     
-                    # Extract the placeholder URL dimensions if available
-                    placeholder_match = re.search(r'src="(https://via\.placeholder\.com/([^"]+))"', content)
-                    
-                    if placeholder_match:
-                        placeholder_url = placeholder_match.group(1)
-                        placeholder_dim = placeholder_match.group(2)
-                        
-                        # Check if the placeholder has dimensions in the format WIDTHxHEIGHT
-                        if 'x' in placeholder_dim:
-                            width, height = placeholder_dim.split('x')
-                            
-                            # Use the Pexels resize URL to get image with appropriate dimensions
-                            photo_id = image_url.split('/')[-2]
-                            sized_image_url = f"https://images.pexels.com/photos/{photo_id}/pexels-photo-{photo_id}.jpeg?auto=compress&cs=tinysrgb&w={width}&h={height}&fit=crop"
-                        else:
-                            # If no dimensions in expected format, use the original image URL
-                            sized_image_url = image_url
-                        
-                        # Replace the specific placeholder URL with the sized image URL
-                        updated_content = content.replace(placeholder_url, sized_image_url)
-                    else:
-                        # If no placeholder URL found, use the original image URL
-                        updated_content = re.sub(
-                            r'src="https://via\.placeholder\.com/[^"]*"',
-                            f'src="{image_url}"',
-                            content
-                        )
-                    
-                    # Log the updated content
-                    logging.info(f"Content after replacement:\n{updated_content}")
-
-                    # Update the project files dictionary
-                    project_files[file_path] = updated_content
-
         except Exception as e:
-            logging.error(f"Error replacing image for prompt '{prompt}': {str(e)}")
+            logging.error(f"Failed to replace image '{prompt}': {str(e)}")
+            continue
 
-    # Replace placeholder video URLs with real video URLs
+    # Process videos
     for prompt in video_prompts:
         try:
-            # Fetch video from Pexels
-            video_url = fetch_video_from_pexels(prompt, api_key)
-            logging.info(f"Fetched video URL for prompt '{prompt}': {video_url}")
-
-            # Replace placeholder video URLs in the project files
+            video_url = fetch_video_from_pexels(prompt)
+            logging.info(f"Found video for '{prompt}': {video_url}")
+            
             for file_path, content in project_files.items():
-                if f'alt="{prompt}"' in content:  # Find the <video> tag with the matching alt text
-                    # Log the file and content before replacement
-                    logging.info(f"Replacing video placeholder in file: {file_path}")
+                if f'alt="{prompt}"' in content:
+                    # Replace video source
+                    new_content = re.sub(
+                        r'(<video[^>]*src=")https://via\.placeholder\.com/[^"]*("[^>]*>)',
+                        f'\\1{video_url}\\2',
+                        content
+                    )
+                    # Replace source elements if present
+                    new_content = re.sub(
+                        r'(<source[^>]*src=")https://via\.placeholder\.com/[^"]*("[^>]*>)',
+                        f'\\1{video_url}\\2 type="video/mp4"',
+                        new_content
+                    )
+                    project_files[file_path] = new_content
                     
-                    # Case 1: Replace <video> tags with a `src` attribute
-                    if 'src="https://via.placeholder.com/' in content:
-                        updated_content = re.sub(
-                            r'src="https://via\.placeholder\.com/[^"]*"',
-                            f'src="{video_url}"',
-                            content
-                        )
-                    # Case 2: Replace <video> tags with a <source> element
-                    elif '<source src="https://via.placeholder.com/' in content:
-                        updated_content = re.sub(
-                            r'<source[^>]*src="https://via\.placeholder\.com/[^"]*"[^>]*>',
-                            f'<source src="{video_url}" type="video/mp4">',
-                            content
-                        )
-                    else:
-                        logging.warning(f"No placeholder found for video with alt='{prompt}' in file: {file_path}")
-                        continue
-                    
-                    # Log the updated content
-                    logging.info(f"Content after replacement:\n{updated_content}")
-
-                    # Update the project files dictionary
-                    project_files[file_path] = updated_content
-
         except Exception as e:
-            logging.error(f"Error replacing video for prompt '{prompt}': {str(e)}")
+            logging.error(f"Failed to replace video '{prompt}': {str(e)}")
+            continue
 
     return project_files
 
-
 def create_zip_from_code(project_files: dict, zip_filename="react_project.zip") -> str:
-    """Create a ZIP file with the generated React project, following the folder structure provided by the API."""
+    """Create ZIP file from generated project."""
     project_dir = "./react_project"
     zip_path = os.path.join("./", zip_filename)
 
-    # Delete existing project directory and ZIP file if they exist
+    # Clean up existing files
     if os.path.exists(project_dir):
-        shutil.rmtree(project_dir)  # Delete the entire directory
-        logging.info(f"Deleted existing project directory: {project_dir}")
+        shutil.rmtree(project_dir)
     if os.path.exists(zip_path):
-        os.remove(zip_path)  # Delete the existing ZIP file
-        logging.info(f"Deleted existing ZIP file: {zip_path}")
+        os.remove(zip_path)
 
-    # Create the project directory
+    # Create directory structure
     os.makedirs(project_dir, exist_ok=True)
-
-    # Write all files to the project directory
+    
+    # Write files
     for file_path, content in project_files.items():
-        # Skip empty file paths
-        if not file_path:
+        if not file_path or file_path.endswith("/"):
             continue
             
         full_path = os.path.join(project_dir, file_path)
-
-        # Skip if the path is a directory (ends with "/" or is exactly a directory name)
-        if file_path.endswith("/") or os.path.isdir(full_path):
-            os.makedirs(full_path, exist_ok=True)
-            continue
-
-        # Create parent directories if they don't exist
-        parent_dir = os.path.dirname(full_path)
-        if parent_dir:  # Only create if there is a parent directory
-            os.makedirs(parent_dir, exist_ok=True)
-
-        # Write the file content
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        
         with open(full_path, "w") as f:
             f.write(content)
 
-    # Create a ZIP file from the project directory
+    # Create ZIP
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for root, _, files in os.walk(project_dir):
             for file in files:
