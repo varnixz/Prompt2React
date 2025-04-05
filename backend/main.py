@@ -6,14 +6,23 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+@app.get("/")
+def read_root():
+    return {"message": "Backend is running!"}
+
 # CORS Setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change this to your frontend URL for security
+    allow_origins=["http://localhost:3000","https://prompt2react.onrender.com"],  # Change this to your frontend URL for security
     allow_credentials=True,
     allow_methods=["*"],  
     allow_headers=["*"],
 )
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logging.info(f"Incoming request: {request.method} {request.url}")
+    response = await call_next(request)
+    return response
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

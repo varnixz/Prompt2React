@@ -3,3 +3,4 @@ uvicorn==0.21.0
 requests==2.28.1
 python-dotenv==0.21.0
 pydantic==1.10.7
+azure-ai-inference
