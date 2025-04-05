@@ -1,7 +1,8 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 import logging
-from ai_utils import generate_code_from_azure_ai, create_zip_from_code
+from ai_utils import generate_code_from_azure_ai
+from create_zip import create_zip_from_code
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()

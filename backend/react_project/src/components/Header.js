@@ -1,16 +1,19 @@
 import React from 'react';
+import { FaGithub, FaLinkedin } from 'react-icons/fa';
 
 const Header = () => {
   return (
-    <header className="h-20 w-full bg-white flex items-center justify-between px-8">
-      <div className="text-2xl font-bold text-gold">University</div>
-      <nav className="flex space-x-8 uppercase">
-        <a href="#" className="text-black hover:text-gold">Home</a>
-        <a href="#" className="text-black hover:text-gold">About</a>
-        <a href="#" className="text-black hover:text-gold">Services</a>
-        <a href="#" className="text-black hover:text-gold">Contact</a>
+    <header className="fixed top-0 left-0 w-full h-20 flex items-center justify-between px-8 bg-transparent z-50">
+      <nav className="flex space-x-6 uppercase text-sm">
+        <a href="#about" className="hover:text-gray-600">About</a>
+        <a href="#expertise" className="hover:text-gray-600">Expertise</a>
+        <a href="#gallery" className="hover:text-gray-600">Gallery</a>
       </nav>
-      <button className="bg-gold text-white px-6 py-2 rounded-full hover:bg-dark-gold">Contact Us</button>
+      <div className="text-2xl font-serif">LudoGame</div>
+      <div className="flex space-x-4">
+        <a href="https://github.com" aria-label="Github"><FaGithub className="text-xl hover:text-gray-600" /></a>
+        <a href="https://linkedin.com" aria-label="LinkedIn"><FaLinkedin className="text-xl hover:text-gray-600" /></a>
+      </div>
     </header>
   );
 };
