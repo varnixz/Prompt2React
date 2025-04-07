@@ -4,6 +4,8 @@ import logging
 from ai_utils import generate_code_from_azure_ai
 from create_zip import create_zip_from_code
 from fastapi.middleware.cors import CORSMiddleware
+from prompt_preprocess import process_prompt_to_embedding
+from cosine_matching import match_best_template
 
 app = FastAPI()
 
@@ -39,9 +41,13 @@ async def generate_react_code(request: Request):
             raise HTTPException(status_code=400, detail="Missing 'prompt' in request body")
 
         logging.info(f"Generating code for prompt: {json_data['prompt']}")
+
+        embedding, _ = process_prompt_to_embedding(json_data["prompt"])
+        index = match_best_template(embedding)
+        print(index)
         
         # Generate code using Azure AI Inference API
-        project_files = generate_code_from_azure_ai(json_data["prompt"])
+        project_files = generate_code_from_azure_ai(json_data["prompt"], index)
         if not project_files:
             raise HTTPException(status_code=500, detail="Failed to generate code.")
         

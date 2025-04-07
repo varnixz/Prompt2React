@@ -1,35 +1,27 @@
 import React from 'react';
-import { FaGithub, FaLinkedin } from 'react-icons/fa';
 
 const Footer = () => {
   return (
-    <footer className="w-full h-[300px] bg-beige-100 flex flex-col justify-center">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto px-8">
+    <footer className="w-full h-[300px] bg-beige-100 flex items-center justify-center">
+      <div className="grid grid-cols-3 gap-8">
         <div>
-          <h3 className="font-serif text-xl mb-4">Navigation</h3>
-          <ul>
-            <li><a href="#about" className="hover:text-gray-600">About</a></li>
-            <li><a href="#expertise" className="hover:text-gray-600">Expertise</a></li>
-            <li><a href="#gallery" className="hover:text-gray-600">Gallery</a></li>
-          </ul>
+          <h3 className="font-bold mb-2">Navigation</h3>
+          <a href="#about" className="block hover:text-gray-600">About</a>
+          <a href="#expertise" className="block hover:text-gray-600">Expertise</a>
+          <a href="#gallery" className="block hover:text-gray-600">Gallery</a>
         </div>
         <div>
-          <h3 className="font-serif text-xl mb-4">Contact</h3>
-          <p>Email: info@ludogame.com</p>
-          <p>Phone: +123 456 7890</p>
-          <p>Location: 123 Game Street, Fun City</p>
+          <h3 className="font-bold mb-2">Contact</h3>
+          <p>Email: info@spacex.com</p>
+          <p>Phone: +1 123 456 7890</p>
         </div>
         <div>
-          <h3 className="font-serif text-xl mb-4">Follow Us</h3>
-          <div className="flex space-x-4">
-            <a href="https://github.com" aria-label="Github"><FaGithub className="text-xl hover:text-gray-600" /></a>
-            <a href="https://linkedin.com" aria-label="LinkedIn"><FaLinkedin className="text-xl hover:text-gray-600" /></a>
-          </div>
+          <h3 className="font-bold mb-2">Follow Us</h3>
+          <a href="#" className="block hover:text-gray-600">Twitter</a>
+          <a href="#" className="block hover:text-gray-600">Instagram</a>
         </div>
       </div>
-      <div className="text-center mt-8">
-        <p className="font-serif text-4xl">LudoGame</p>
-      </div>
+      <div className="absolute bottom-8 text-4xl font-serif">SpaceX</div>
     </footer>
   );
 };

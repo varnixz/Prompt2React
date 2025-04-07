@@ -1,30 +1,20 @@
 import React from 'react';
-import { useState } from 'react';
 
 const Hero = () => {
-  const [currentImage, setCurrentImage] = useState(0);
-  const images = [
-    'https://via.placeholder.com/800x600',
-    'https://via.placeholder.com/800x600',
-    'https://via.placeholder.com/800x600',
-  ];
-
-  const nextImage = () => {
-    setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1));
-  };
-
-  const prevImage = () => {
-    setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-  };
+  const images = Array(3).fill({ src: 'https://images.pexels.com/photos/60130/pexels-photo-60130.jpeg?auto=compress&cs=tinysrgb&w=x600&h=x600&fit=crop', alt: 'SpaceX rocket' });
 
   return (
     <section className="h-screen flex flex-col items-center justify-center bg-gray-100">
-      <h1 className="text-5xl font-serif text-black mb-4">Welcome to LudoGame</h1>
-      <p className="text-lg mb-8">The ultimate board game experience</p>
-      <div className="relative w-full max-w-3xl">
-        <img src={images[currentImage]} alt="game" className="w-full h-auto rounded-lg shadow-lg" />
-        <button onClick={prevImage} className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white p-2 rounded-full shadow-lg">&#10094;</button>
-        <button onClick={nextImage} className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white p-2 rounded-full shadow-lg">&#10095;</button>
+      <h1 className="text-5xl font-serif mb-4">Exploring the Cosmos</h1>
+      <p className="text-lg mb-8">Discover the future of space travel.</p>
+      <div className="w-3/4 overflow-hidden relative">
+        <div className="flex transition-transform duration-500">
+          {images.map((img, index) => (
+            <img key={index} src={img.src} alt={img.alt} className="w-full h-auto" />
+          ))}
+        </div>
+        <button className="absolute top-1/2 left-0 transform -translate-y-1/2 bg-black text-white p-2">←</button>
+        <button className="absolute top-1/2 right-0 transform -translate-y-1/2 bg-black text-white p-2">→</button>
       </div>
     </section>
   );

@@ -2,16 +2,15 @@ import React from 'react';
 
 const About = () => {
   return (
-    <section id="about" className="h-[600px] flex items-center px-8 bg-white">
+    <section id="about" className="h-[600px] flex items-center justify-center bg-white">
       <div className="w-1/2">
-        <img src="https://images.pexels.com/photos/2681319/pexels-photo-2681319.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop" alt="about" className="w-full h-auto rounded-lg shadow-lg" />
+        <img src="https://images.pexels.com/photos/7666421/pexels-photo-7666421.jpeg?auto=compress&cs=tinysrgb&w=x600&h=x600&fit=crop" alt="SpaceX mission" className="w-full h-auto" />
       </div>
       <div className="w-1/2 pl-8">
         <p className="text-xl font-serif italic">
-          LudoGame is a modern take on the classic board game, designed for players of all ages. <br />
-          <span className="font-bold">Play anytime, anywhere!</span>
+          SpaceX is revolutionizing space technology, with the ultimate goal of enabling people to live on other planets.
         </p>
-        <img src="https://images.pexels.com/photos/48148/pexels-photo-48148.jpeg?auto=compress&cs=tinysrgb&w=200&h=100&fit=crop" alt="signature" className="mt-8 w-40 h-auto" />
+        <img src="https://images.pexels.com/photos/30918009/pexels-photo-30918009.jpeg?auto=compress&cs=tinysrgb&w=x50&h=x50&fit=crop" alt="Elon Musk signature" className="mt-4" />
       </div>
     </section>
   );
