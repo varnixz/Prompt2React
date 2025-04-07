@@ -6,3 +6,4 @@ pydantic==1.10.7
 azure-ai-inference
 numpy
 torch
+hashlib
