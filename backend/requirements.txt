@@ -5,3 +5,4 @@ python-dotenv==0.21.0
 pydantic==1.10.7
 azure-ai-inference
 numpy
+torch
